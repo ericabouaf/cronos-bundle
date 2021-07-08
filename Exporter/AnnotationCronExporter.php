@@ -7,6 +7,7 @@ use Doctrine\Common\Annotations\Reader;
 use MyBuilder\Bundle\CronosBundle\Annotation\Cron as CronAnnotation;
 use MyBuilder\Cronos\Formatter\Cron as CronFormatter;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\LazyCommand;
 
 class AnnotationCronExporter
 {
@@ -55,6 +56,11 @@ class AnnotationCronExporter
 
     private function parseAnnotations(CronFormatter $cron, Command $command, array $options): CronFormatter
     {
+        // Since 5.3, the Symfony Application returns LazyCommand when it can instead of instantiating them
+        if (class_exists(LazyCommand::class) && $command instanceof LazyCommand) {
+            $command = $command->getCommand();
+        }
+
         foreach ($this->getAnnotations($command) as $annotation) {
             if ($this->annotationBelongsToServer($annotation, $options['serverName'])) {
                 $cron = $this->addLine($command, $annotation, $options, $cron);
